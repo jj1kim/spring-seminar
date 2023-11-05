@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.jdbc.Sql
 import java.util.concurrent.Executors
+
 
 /***
  * 주의: @Transactional 사용하지 않기. (데이터 롤백, 레이지 로드 등의 이슈를 피할 수 있도록 구현)
@@ -21,6 +23,7 @@ class CustomPlaylistServiceTest @Autowired constructor(
 ) {
 
     @Test
+    @Sql("/truncate.sql")
     fun `커스텀 플레이리스트 생성시, 자동 생성되는 제목은 내 플레이리스트 #${유저의 커스텀 플레이리스트 갯수 + 1}`() {
         val created = customPlaylistService.create(userId = 1L)
 

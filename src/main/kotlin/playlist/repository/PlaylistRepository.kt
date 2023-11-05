@@ -6,6 +6,11 @@ import org.springframework.data.jpa.repository.Query
 
 
 interface PlaylistRepository : JpaRepository<PlaylistEntity, Long> {
+
+    @Modifying
+    @Query("UPDATE playlists c SET c.viewCnt = c.viewCnt + 1 WHERE c.id = :id")
+    fun IncreaseviewCnt(id:Long)
+
     @Query("""
         SELECT p FROM playlists p 
         JOIN FETCH p.songs ps

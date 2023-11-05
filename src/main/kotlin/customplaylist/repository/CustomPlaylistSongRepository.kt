@@ -13,8 +13,7 @@ interface CustomPlaylistSongRepository : JpaRepository<CustomPlaylistSongEntity,
     @Modifying
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
     @Query(
-        value = "INSERT INTO custom_playlist_songs (custom_playlist_id, song_id) VALUES (:customPlaylistId, :songId)",
-        nativeQuery = true
+        value = "INSERT INTO custom_playlist_songs (custom_playlist_id, song_id) VALUES (:customPlaylistId, :songId)", nativeQuery = true
     )
     fun insertCustomPlaylistSong(@Param("customPlaylistId") customPlaylistId: Long, @Param("songId") songId: Long)
 

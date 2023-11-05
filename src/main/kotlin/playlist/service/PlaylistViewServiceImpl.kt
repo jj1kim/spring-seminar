@@ -3,6 +3,7 @@ package com.wafflestudio.seminar.spring2023.playlist.service
 import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistRepository
 import com.wafflestudio.seminar.spring2023.playlist.service.SortPlaylist.Type
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.CompletableFuture
@@ -27,7 +28,7 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository) : Play
      *  3. create 함수가 실패해도, 플레이리스트 조회 API 응답은 성공해야 한다.
      *  4. Future가 리턴 타입인 이유를 고민해보며 구현하기.
      */
-
+    @Transactional
     override fun create(playlistId: Long, userId: Long, at: LocalDateTime): Future<Boolean> {
         val playlist = playlistRepository.findById(playlistId)
             .orElseThrow { NoSuchElementException("Playlist not found") }
@@ -37,7 +38,7 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository) : Play
         if (lastViewedTime == null || Duration.between(lastViewedTime, at).toMinutes() >= 1) {
             playListHotTracker.recordViewTime(playlistId, at)
             userLastViewedMap[userId] = at
-            playlist.viewCnt++
+            playlistRepository.IncreaseviewCnt(playlistId)
             playlistRepository.save(playlist)
             return CompletableFuture.completedFuture(true)
         }

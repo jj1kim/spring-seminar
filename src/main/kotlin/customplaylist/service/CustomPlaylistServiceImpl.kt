@@ -11,6 +11,7 @@ import com.wafflestudio.seminar.spring2023.song.service.Song
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+
 import kotlin.jvm.optionals.getOrElse
 
 /**
@@ -30,7 +31,7 @@ class CustomPlaylistServiceImpl(
     private val songRepository: SongRepository,
     private val objectMapper: ObjectMapper
 ) : CustomPlaylistService {
-
+    @Transactional
     override fun get(userId: Long, customPlaylistId: Long): CustomPlaylist {
         val customPlaylistEntity = customPlaylistRepository.findById(customPlaylistId).getOrElse {
             throw EntityNotFoundException("CustomPlaylist not found")
@@ -59,7 +60,7 @@ class CustomPlaylistServiceImpl(
             }
         )
     }
-
+    @Transactional
     override fun gets(userId: Long): List<CustomPlaylistBrief> {
         val playlists = customPlaylistRepository.findByUserId(userId)
         val playlistBriefs = playlists.map { customPlaylistEntity ->
@@ -68,14 +69,13 @@ class CustomPlaylistServiceImpl(
 
         return playlistBriefs
     }
-    @Transactional
     override fun create(userId: Long): CustomPlaylistBrief {
         val cnt = customPlaylistRepository.countByUserId(userId)
         val newPlaylist = CustomPlaylistEntity(userId = userId, title = "내 플레이리스트 #${cnt+1}")
         val savedPlaylist = customPlaylistRepository.saveAndFlush(newPlaylist)
         return CustomPlaylistBrief(savedPlaylist.id, savedPlaylist.title, 0)
     }
-
+    @Transactional
     override fun patch(userId: Long, customPlaylistId: Long, title: String): CustomPlaylistBrief {
         val playlist = customPlaylistRepository.findById(customPlaylistId).getOrElse {
             throw CustomPlaylistNotFoundException()
@@ -99,7 +99,7 @@ class CustomPlaylistServiceImpl(
         val song = songRepository.findById(songId).getOrElse {
             throw SongNotFoundException()}
 
-        customPlaylistRepository.incrementSongCount(customPlaylistId)
+
         customPlaylistSongRepository.insertCustomPlaylistSong(customPlaylistId, songId)
 
         // Create a new CustomPlaylistSongEntity
@@ -109,9 +109,11 @@ class CustomPlaylistServiceImpl(
         customPlaylist.songs.add(customPlaylistSong)
 
         // Increment song count
-        customPlaylist.songCnt++
+        customPlaylistRepository.increasesongCnt(customPlaylistId)
 
         // You can return the updated CustomPlaylistBrief here
         return customPlaylist.toCustomPlaylistBrief()
     }
 }
+
+

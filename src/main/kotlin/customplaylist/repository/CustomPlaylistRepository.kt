@@ -20,14 +20,7 @@ interface CustomPlaylistRepository : JpaRepository<CustomPlaylistEntity, Long> {
 """)
     fun findByIdAndUserIdWithSongs(@Param("id") customPlaylistId: Long, @Param("user_id") userId: Long): CustomPlaylistEntity?
 
-
     @Modifying
-    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
-    @Query(value = """
-        UPDATE custom_playlists 
-        SET song_cnt = song_cnt + 1 
-        WHERE id = :id
-        """, nativeQuery = true)
-    fun incrementSongCount(@Param("id") customPlaylistId: Long): Int
-
+    @Query("UPDATE custom_playlists c SET c.songCnt = c.songCnt + 1 WHERE c.id = :id")
+    fun increasesongCnt(id:Long)
 }

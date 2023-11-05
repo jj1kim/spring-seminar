@@ -36,7 +36,6 @@ class CustomPlaylistServiceTest @Autowired constructor(
     @Test
     fun `커스텀 플레이리스트 타이틀 수정`() {
         val created = customPlaylistService.create(userId = 1L)
-
         val updated = customPlaylistService.patch(userId = 1L, customPlaylistId = created.id, title = "수정")
 
         assertThat(updated.title).isEqualTo("수정")

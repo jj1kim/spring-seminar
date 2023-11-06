@@ -4,15 +4,21 @@ import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistRepositor
 import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistViewRepository
 import com.wafflestudio.seminar.spring2023.playlist.service.SortPlaylist.Type
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import java.time.Duration
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 @Service
-class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository, val playlistviewRepository: PlaylistViewRepository) : PlaylistViewService, SortPlaylist {
+class PlaylistViewServiceImpl(
+    val playlistRepository: PlaylistRepository,
+    val playlistviewRepository: PlaylistViewRepository,
+    txManager: PlatformTransactionManager,
+) : PlaylistViewService, SortPlaylist {
+
+    private val executors = Executors.newFixedThreadPool(8)
+    private val txTemplate = TransactionTemplate(txManager)
 
     /**
      * 스펙:
@@ -27,20 +33,21 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository, val pl
      *  3. create 함수가 실패해도, 플레이리스트 조회 API 응답은 성공해야 한다.
      *  4. Future가 리턴 타입인 이유를 고민해보며 구현하기.
      */
-    @Transactional
     override fun create(playlistId: Long, userId: Long, at: LocalDateTime): Future<Boolean> {
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NoSuchElementException("Playlist not found") }
+        return executors.submit<Boolean> { // 조건 2,3을 만족시키기 위해 이 작업을 다른 스레드에 위임하는 코드입니다.
+            txTemplate.execute { // 스펙 2를 만족시키기 위해 트랜잭션을 적용하는 코드입니다.  @Transactional 어노테이션은 다른 스레드에서 동작하지 않기 때문에, 직접 코드로 트랜잭션을 처리하는 것입니다.
+                if (true) { // TODO (1) true를 수정해서 스펙 1을 만족시켜야 합니다. playlistViewRepository에 정의된 함수를 이용하시면 됩니다.
+                    return@execute false
+                }
 
-        val lastviewid=playlistviewRepository.findByPlaylistIdAndUserId(playlistId,userId).maxBy{it.createdAt}
 
-        if (!playlistviewRepository.existsByPlaylistIdAndUserIdAndCreatedAtAfterAndCreatedAtBefore(playlistId,userId,at,at.minusMinutes(1))) {
-            playlistviewRepository.updatePlaylistViewEntity(lastviewid.id+1,userId,playlistId,at)
-            playlistRepository.IncreaseviewCnt(playlistId)
-            playlistRepository.save(playlist)
-            return CompletableFuture.completedFuture(true)
+                // TODO (2) playlistViewEntity를 저장합니다.
+
+                // TODO (3) playlistEntity의 viewCnt를 업데이트 합니다. playlistRepository에 정의된 함수를 이용하시면 됩니다.
+
+                true
+            }
         }
-        return CompletableFuture.completedFuture(false)
     }
 
     override fun invoke(playlists: List<PlaylistBrief>, type: Type, at: LocalDateTime): List<PlaylistBrief> {
@@ -53,13 +60,8 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository, val pl
             }
 
             Type.HOT -> {
-                val playlistIds = playlists.map { it.id }
-                for(i in playlistIds){
-                    val lasthourviewCounts = playlistviewRepository.findAllByPlaylistIdAndCreatedAtAfter(i,at.minusHours(1))
-                    playlistRepository.IncreaseLastHourViewCnt(i, lasthourviewCounts.size)
-                }
-                val viewCounts = playlistRepository.findAllById(playlistIds).associateBy({ it.id }, { it.LastHourViewCnt })
-                playlists.sortedByDescending {viewCounts[it.id]}
+                // TODO() (4) 인자로 들어온 playlists와 관련된 최근 1시간 동안의 playlistView를 전부 조회한 후에, (playlist-최근 1시간 조회수) 꼴의 맵을 만들고, 그에 따라 정렬해주세요. playlistViewRepository에 정의된 함수를 사용하세요.
+                playlists
             }
         }
     }

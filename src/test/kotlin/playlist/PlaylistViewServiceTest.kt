@@ -49,6 +49,7 @@ class PlaylistViewServiceTest @Autowired constructor(
     @Test
     fun `플레이리스트 조회 요청이 동시에 다수 들어와도, 요청이 들어온 만큼 조회수가 증가해야한다`() {
         val beforePlaylist = playlistRepository.findById(1L).get()
+
         (1L..8L)
             .map { playlistViewService.create(playlistId = 1L, userId = it) }
             .map { it.get() }
@@ -69,32 +70,32 @@ class PlaylistViewServiceTest @Autowired constructor(
 
         // Playlist(1) 총 조회 수 3, 최근 조회 수 0
         (1L..3L)
-                .map { playlistViewService.create(playlistId = 1L, userId = it, at = now.minusHours(2)) }
-                .map { it.get() }
+            .map { playlistViewService.create(playlistId = 1L, userId = it, at = now.minusHours(2)) }
+            .map { it.get() }
 
         // Playlist(2) 총 조회 수 5, 최근 조회 수 1
         (1L..4L)
-                .map { playlistViewService.create(playlistId = 2L, userId = it, at = now.minusHours(2)) }
-                .map { it.get() }
+            .map { playlistViewService.create(playlistId = 2L, userId = it, at = now.minusHours(2)) }
+            .map { it.get() }
 
         playlistViewService.create(playlistId = 2L, userId = 5L, at = now)
 
         // Playlist(3) 총 조회 수 2, 최근 조회 수 2
         (1L..2L)
-                .map { playlistViewService.create(playlistId = 3L, userId = it, at = now) }
-                .map { it.get() }
+            .map { playlistViewService.create(playlistId = 3L, userId = it, at = now) }
+            .map { it.get() }
 
         assertThat(sortPlaylist.invoke(mockPlaylists, type = Type.DEFAULT)
-                .map { it.id })
-                .isEqualTo(listOf(1L, 2L, 3L))
+            .map { it.id })
+            .isEqualTo(listOf(1L, 2L, 3L))
 
         assertThat(sortPlaylist.invoke(mockPlaylists, type = Type.VIEW)
-                .map { it.id })
-                .isEqualTo(listOf(2L, 1L, 3L))
+            .map { it.id })
+            .isEqualTo(listOf(2L, 1L, 3L))
 
         assertThat(sortPlaylist.invoke(mockPlaylists, type = Type.HOT, at = now)
-                .map { it.id })
-                .isEqualTo(listOf(3L, 2L, 1L))
+            .map { it.id })
+            .isEqualTo(listOf(3L, 2L, 1L))
     }
 
     @BeforeEach

@@ -48,3 +48,8 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
     annotation("jakarta.persistence.MappedSuperclass")
 }
+dependencies {
+    implementation ("com.slack.api:slack-api-client:1.35.0")
+    implementation("com.slack.api:slack-api-model-kotlin-extension:1.35.0")
+    implementation("com.slack.api:slack-api-client-kotlin-extension:1.35.0")
+}

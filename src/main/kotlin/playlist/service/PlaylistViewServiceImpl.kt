@@ -1,6 +1,8 @@
 package com.wafflestudio.seminar.spring2023.playlist.service
 
+import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistEntity
 import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistRepository
+import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistViewEntity
 import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistViewRepository
 import com.wafflestudio.seminar.spring2023.playlist.service.SortPlaylist.Type
 import org.springframework.stereotype.Service
@@ -36,14 +38,16 @@ class PlaylistViewServiceImpl(
     override fun create(playlistId: Long, userId: Long, at: LocalDateTime): Future<Boolean> {
         return executors.submit<Boolean> { // 조건 2,3을 만족시키기 위해 이 작업을 다른 스레드에 위임하는 코드입니다.
             txTemplate.execute { // 스펙 2를 만족시키기 위해 트랜잭션을 적용하는 코드입니다.  @Transactional 어노테이션은 다른 스레드에서 동작하지 않기 때문에, 직접 코드로 트랜잭션을 처리하는 것입니다.
-                if (true) { // TODO (1) true를 수정해서 스펙 1을 만족시켜야 합니다. playlistViewRepository에 정의된 함수를 이용하시면 됩니다.
+                if (playlistviewRepository.existsByPlaylistIdAndUserIdAndCreatedAtAfterAndCreatedAtBefore(playlistId,userId,at.minusMinutes(1),at)) { //(1) true를 수정해서 스펙 1을 만족시켜야 합니다. playlistViewRepository에 정의된 함수를 이용하시면 됩니다.
                     return@execute false
                 }
 
+                // playlistViewEntity를 저장합니다.
+                val playlistviewentity=PlaylistViewEntity(playlistId=playlistId,userId=userId, createdAt = at) //id를 따로 처리할 필요는 없다
+                playlistviewRepository.save(playlistviewentity)
 
-                // TODO (2) playlistViewEntity를 저장합니다.
-
-                // TODO (3) playlistEntity의 viewCnt를 업데이트 합니다. playlistRepository에 정의된 함수를 이용하시면 됩니다.
+                // playlistEntity의 viewCnt를 업데이트 합니다. playlistRepository에 정의된 함수를 이용하시면 됩니다.
+                playlistRepository.incrementViewCnt(playlistId)
 
                 true
             }
@@ -60,8 +64,15 @@ class PlaylistViewServiceImpl(
             }
 
             Type.HOT -> {
-                // TODO() (4) 인자로 들어온 playlists와 관련된 최근 1시간 동안의 playlistView를 전부 조회한 후에, (playlist-최근 1시간 조회수) 꼴의 맵을 만들고, 그에 따라 정렬해주세요. playlistViewRepository에 정의된 함수를 사용하세요.
-                playlists
+                // (4) 인자로 들어온 playlists와 관련된 최근 1시간 동안의 playlistView를 전부 조회한 후에, (playlist-최근 1시간 조회수) 꼴의 맵을 만들고, 그에 따라 정렬해주세요. playlistViewRepository에 정의된 함수를 사용하세요.
+                val playlistIds = playlists.map { it.id }
+                val hourplaylists=playlistviewRepository.findAllByPlaylistIdInAndCreatedAtAfter(playlistIds,at.minusHours(1))
+                val viewmap= mutableMapOf<Long,Int>()
+                for(i in playlistIds){
+                    val hourviewCnt=hourplaylists.filter { it.playlistId == i }.size
+                    viewmap[i]=hourviewCnt //왜 맵을 만들어서 이러한 정렬 방식을 써야하는가?에 대한 공부 필요
+                }
+                playlists.sortedByDescending { viewmap[it.id] }
             }
         }
     }

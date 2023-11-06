@@ -1,6 +1,5 @@
 package com.wafflestudio.seminar.spring2023.customplaylist.repository
 
-import com.wafflestudio.seminar.spring2023.customplaylist.service.CustomPlaylistBrief
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -18,8 +17,4 @@ class CustomPlaylistEntity(
     @OneToMany(mappedBy = "customPlaylist", cascade = [CascadeType.ALL], orphanRemoval = true)
     val songs: MutableList<CustomPlaylistSongEntity> = mutableListOf(),
     var songCnt: Int = 0,
-) {
-    fun toCustomPlaylistBrief(): CustomPlaylistBrief {
-        return CustomPlaylistBrief(id, title, songCnt)
-    }
-}
+)

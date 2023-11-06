@@ -2,7 +2,6 @@ package com.wafflestudio.seminar.spring2023._web.log
 
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import org.springframework.web.util.ContentCachingRequestWrapper
 
 interface LogRequest {
     operator fun invoke(request: Request)
@@ -15,8 +14,9 @@ interface LogRequest {
 @Component
 class LogRequestImpl : LogRequest {
     private val logger = LoggerFactory.getLogger(javaClass)
+
     override operator fun invoke(request: Request) {
-        logger.info("[API-REQUEST] ${request.method} ${request.path}")
+        TODO()
     }
 }
 

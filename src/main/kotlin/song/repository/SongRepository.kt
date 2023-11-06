@@ -1,9 +1,7 @@
 package com.wafflestudio.seminar.spring2023.song.repository
 
-import com.wafflestudio.seminar.spring2023.customplaylist.repository.CustomPlaylistSongEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 
 interface SongRepository : JpaRepository<SongEntity, Long> {
     @Query("""
@@ -23,6 +21,4 @@ interface SongRepository : JpaRepository<SongEntity, Long> {
         WHERE s.id IN :ids
     """)
     fun findAllByIdWithJoinFetch(ids: List<Long>): List<SongEntity>
-
-
 }

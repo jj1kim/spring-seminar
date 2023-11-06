@@ -13,9 +13,6 @@ spring:
     password: 1234
   jpa:
     defer-datasource-initialization: true
-    properties:
-      hibernate:
-        default_batch_fetch_size: 100
 
 cache:
   ttl: 10s

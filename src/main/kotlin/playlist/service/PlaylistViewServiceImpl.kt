@@ -1,6 +1,7 @@
 package com.wafflestudio.seminar.spring2023.playlist.service
 
 import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistRepository
+import com.wafflestudio.seminar.spring2023.playlist.repository.PlaylistViewRepository
 import com.wafflestudio.seminar.spring2023.playlist.service.SortPlaylist.Type
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,9 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
 @Service
-class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository) : PlaylistViewService, SortPlaylist {
-    private val userLastViewedMap = mutableMapOf<Long, LocalDateTime>()
-    private val playListHotTracker = ViewTimeTracker()
+class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository, val playlistviewRepository: PlaylistViewRepository) : PlaylistViewService, SortPlaylist {
 
     /**
      * 스펙:
@@ -33,11 +32,10 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository) : Play
         val playlist = playlistRepository.findById(playlistId)
             .orElseThrow { NoSuchElementException("Playlist not found") }
 
-        val lastViewedTime = userLastViewedMap[userId]
+        val lastviewid=playlistviewRepository.findByPlaylistIdAndUserId(playlistId,userId).maxBy{it.createdAt}
 
-        if (lastViewedTime == null || Duration.between(lastViewedTime, at).toMinutes() >= 1) {
-            playListHotTracker.recordViewTime(playlistId, at)
-            userLastViewedMap[userId] = at
+        if (!playlistviewRepository.existsByPlaylistIdAndUserIdAndCreatedAtAfterAndCreatedAtBefore(playlistId,userId,at,at.minusMinutes(1))) {
+            playlistviewRepository.updatePlaylistViewEntity(lastviewid.id+1,userId,playlistId,at)
             playlistRepository.IncreaseviewCnt(playlistId)
             playlistRepository.save(playlist)
             return CompletableFuture.completedFuture(true)
@@ -54,20 +52,15 @@ class PlaylistViewServiceImpl(val playlistRepository: PlaylistRepository) : Play
                 playlists.sortedByDescending { viewCounts[it.id] }
             }
 
-            Type.HOT -> playlists.sortedByDescending {
-                playListHotTracker.getViewTimesWithinPastHour(it.id, at)?.size
+            Type.HOT -> {
+                val playlistIds = playlists.map { it.id }
+                for(i in playlistIds){
+                    val lasthourviewCounts = playlistviewRepository.findAllByPlaylistIdAndCreatedAtAfter(i,at.minusHours(1))
+                    playlistRepository.IncreaseLastHourViewCnt(i, lasthourviewCounts.size)
+                }
+                val viewCounts = playlistRepository.findAllById(playlistIds).associateBy({ it.id }, { it.LastHourViewCnt })
+                playlists.sortedByDescending {viewCounts[it.id]}
             }
         }
     }
-
-class ViewTimeTracker {
-    private val viewTimes: MutableMap<Long, MutableList<LocalDateTime>> = ConcurrentHashMap()
-    fun recordViewTime(id: Long, at: LocalDateTime) {
-        viewTimes.computeIfAbsent(id) { mutableListOf() }.add(at)
-    }
-
-    fun getViewTimesWithinPastHour(id: Long, at: LocalDateTime): List<LocalDateTime>? {
-        return viewTimes[id]?.filter { it.isAfter(at.minusHours(1)) }
-    }
-}
 }

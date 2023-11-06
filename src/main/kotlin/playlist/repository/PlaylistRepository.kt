@@ -18,4 +18,8 @@ interface PlaylistRepository : JpaRepository<PlaylistEntity, Long> {
     """)
     fun findByIdWithSongs(id: Long): PlaylistEntity?
 
+    @Modifying
+    @Query("UPDATE playlists c SET c.LastHourViewCnt = c.LastHourViewCnt+:cnt WHERE c.id = :id")
+    fun IncreaseLastHourViewCnt(id:Long,cnt : Int)
+
 }

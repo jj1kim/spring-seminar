@@ -14,7 +14,7 @@ interface PlaylistRepository : JpaRepository<PlaylistEntity, Long> {
     """)
     fun findByIdWithSongs(id: Long): PlaylistEntity?
 
-    @Modifying
+    @Modifying //동시성 이슈 해결용
     @Transactional
     @Query(
         """

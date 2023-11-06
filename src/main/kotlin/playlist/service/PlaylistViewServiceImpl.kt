@@ -70,7 +70,7 @@ class PlaylistViewServiceImpl(
                 val viewmap= mutableMapOf<Long,Int>()
                 for(i in playlistIds){
                     val hourviewCnt=hourplaylists.filter { it.playlistId == i }.size
-                    viewmap[i]=hourviewCnt
+                    viewmap[i]=hourviewCnt //왜 맵을 만들어서 이러한 정렬 방식을 써야하는가?에 대한 공부 필요
                 }
                 playlists.sortedByDescending { viewmap[it.id] }
             }

@@ -13,7 +13,7 @@ class AdminBatchServiceImpl(
         val artistRepository: ArtistRepository,
         val txTemplate: TransactionTemplate,
 ) : AdminBatchService {
-    private val threads = Executors.newFixedThreadPool(4) //멀티 스레드로 작업 분리 구현
+    private val threads = Executors.newFixedThreadPool(4) //멀티 스레드로 작업 분리 구현 -> insert를 atomic하게 하기 위한 조치 + 멀티 스레딩으로 성능 향상
     override fun insertAlbums(albumInfos: List<BatchAlbumInfo>) {
         val jobs: MutableList<Future<*>> = mutableListOf() //각 작업의 분리
 
